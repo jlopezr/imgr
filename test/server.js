@@ -325,6 +325,27 @@ describe('Server', function () {
         });
     });
 
+    it('should respect the maxsize', function (done) {
+        var app = server();
+        imgr().serve(images)
+            .namespace('/foo')
+            .cacheDir(compiled)
+            .maxsize('400x400')
+            .using(app);
+        assert.statusCode(app.host + '/foo/400x400/1.jpg', 200, function () {
+            assert.statusCode(app.host + '/foo/500x500-centre/1.jpg', 403, function () {
+                assert.statusCode(app.host + '/foo/400x/1.jpg', 200, function () {
+                    assert.statusCode(app.host + '/foo/450x400/1.jpg', 403, function() {
+                        assert.statusCode(app.host + '/foo/400x450/1.jpg', 403, function() {
+                            app.server.close();
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+    });
+
     it('should support a custom rewriting strategy', function (done) {
         var app = server();
         imgr().serve(images)
